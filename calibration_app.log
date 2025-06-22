@@ -1,0 +1,70 @@
+2025-06-18 15:54:38,549 ERROR: Exception on /instruments [GET] [in C:\Users\EZEN\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py:875]
+Traceback (most recent call last):
+  File "C:\Users\EZEN\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\EZEN\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 920, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "C:\Users\EZEN\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 939, in finalize_request
+    response = self.make_response(rv)
+  File "C:\Users\EZEN\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1212, in make_response
+    raise TypeError(
+    ...<3 lines>...
+    )
+TypeError: The view function for 'instruments' did not return a valid response. The function either returned None or ended without a return statement.
+2025-06-18 15:54:44,966 ERROR: Exception on /instruments [GET] [in C:\Users\EZEN\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py:875]
+Traceback (most recent call last):
+  File "C:\Users\EZEN\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\EZEN\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 920, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "C:\Users\EZEN\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 939, in finalize_request
+    response = self.make_response(rv)
+  File "C:\Users\EZEN\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1212, in make_response
+    raise TypeError(
+    ...<3 lines>...
+    )
+TypeError: The view function for 'instruments' did not return a valid response. The function either returned None or ended without a return statement.
+2025-06-18 15:55:01,987 ERROR: Exception on /instruments [GET] [in C:\Users\EZEN\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py:875]
+Traceback (most recent call last):
+  File "C:\Users\EZEN\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\EZEN\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 920, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "C:\Users\EZEN\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 939, in finalize_request
+    response = self.make_response(rv)
+  File "C:\Users\EZEN\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1212, in make_response
+    raise TypeError(
+    ...<3 lines>...
+    )
+TypeError: The view function for 'instruments' did not return a valid response. The function either returned None or ended without a return statement.
+2025-06-18 16:50:54,984 ERROR: Exception on /instruments [GET] [in C:\Users\EZEN\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py:875]
+Traceback (most recent call last):
+  File "C:\Users\EZEN\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\EZEN\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 920, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "C:\Users\EZEN\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 939, in finalize_request
+    response = self.make_response(rv)
+  File "C:\Users\EZEN\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1212, in make_response
+    raise TypeError(
+    ...<3 lines>...
+    )
+TypeError: The view function for 'instruments' did not return a valid response. The function either returned None or ended without a return statement.
+2025-06-18 16:54:15,435 ERROR: Exception on /instruments [GET] [in C:\Users\EZEN\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py:875]
+Traceback (most recent call last):
+  File "C:\Users\EZEN\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\EZEN\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 920, in full_dispatch_request
+    return self.finalize_request(rv)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^
+  File "C:\Users\EZEN\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 939, in finalize_request
+    response = self.make_response(rv)
+  File "C:\Users\EZEN\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1212, in make_response
+    raise TypeError(
+    ...<3 lines>...
+    )
+TypeError: The view function for 'instruments' did not return a valid response. The function either returned None or ended without a return statement.

@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+
+{% block title %}Instruments - Calibration Manager{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h2 mb-0">
+                <i class="bi bi-tools me-2"></i>Instruments
+            </h1>
+            <p class="text-muted">Manage your calibration instruments and schedules</p>
+        </div>
+        <div class="col-auto">
+            <a href="{{ url_for('add_instrument') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-2"></i>Add Instrument
+            </a>
+        </div>
+    </div>
+
+    <!-- Search and Filter Controls -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-6">
+                    <label for="search" class="form-label">Search Instruments</label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" 
+                               class="form-control" 
+                               id="search" 
+                               name="search" 
+                               value="{{ search }}"
+                               placeholder="Search by name, manufacturer, or model...">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label for="status" class="form-label">Filter by Status</label>
+                    <select class="form-select" id="status" name="status">
+                        <option value="">All Statuses</option>
+                        <option value="overdue" {% if status_filter == 'overdue' %}selected{% endif %}>Overdue</option>
+                        <option value="upcoming" {% if status_filter == 'upcoming' %}selected{% endif %}>Due Soon</option>
+                        <option value="current" {% if status_filter == 'current' %}selected{% endif %}>Current</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-funnel me-2"></i>Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Instruments Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="bi bi-list me-2"></i>Instrument List
+                {% if instruments %}
+                    <span class="badge bg-secondary ms-2">{{ instruments|length }}</span>
+                {% endif %}
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            {% if instruments %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Instrument Details</th>
+                                <th>Location</th>
+                                <th>Last Calibration</th>
+                                <th>Frequency</th>
+                                <th>Status</th>
+                                <th>Next Due</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for instrument in instruments %}
+                            <tr class="{% if instrument['status'] == 'overdue' %}table-danger{% elif instrument['status'] == 'upcoming' %}table-warning{% endif %}">
+                                <td>
+                                    <div>
+                                        <strong class="d-block">{{ instrument['name'] }}</strong>
+                                        {% if instrument['manufacturer'] or instrument['model'] %}
+                                            <small class="text-muted">
+                                                {% if instrument['manufacturer'] %}{{ instrument['manufacturer'] }}{% endif %}
+                                                {% if instrument['manufacturer'] and instrument['model'] %} - {% endif %}
+                                                {% if instrument['model'] %}{{ instrument['model'] }}{% endif %}
+                                            </small>
+                                        {% endif %}
+                                        {% if instrument['serial_number'] %}
+                                            <br><small class="text-muted">S/N: {{ instrument['serial_number'] }}</small>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if instrument['location'] %}
+                                        <i class="bi bi-geo-alt me-1"></i>{{ instrument['location'] }}
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ instrument['last_calibration_date'] }}</td>
+                                <td>{{ instrument['calibration_frequency'] }} days</td>
+                                <td>
+                                    {% if instrument['status'] == 'overdue' %}
+                                        <span class="badge bg-danger">
+                                            <i class="bi bi-exclamation-triangle me-1"></i>Overdue
+                                        </span>
+                                        <br><small class="text-danger">{{ instrument['days_info'] }} days overdue</small>
+                                    {% elif instrument['status'] == 'upcoming' %}
+                                        <span class="badge bg-warning text-dark">
+                                            <i class="bi bi-clock me-1"></i>Due Soon
+                                        </span>
+                                        <br><small class="text-warning">{{ instrument['days_info'] }} days remaining</small>
+                                    {% else %}
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-check-circle me-1"></i>Current
+                                        </span>
+                                        <br><small class="text-success">{{ instrument['days_info'] }} days remaining</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% set last_date = instrument['last_calibration_date'] | string %}
+                                    {% set frequency = instrument['calibration_frequency'] %}
+                                    {% if last_date %}
+                                        <small class="text-muted">
+                                            See status
+                                        </small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ url_for('edit_instrument', instrument_id=instrument['id']) }}" 
+                                           class="btn btn-outline-secondary" 
+                                           title="Edit Instrument">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <button type="button" 
+                                                class="btn btn-outline-success" 
+                                                title="Mark as Calibrated"
+                                                onclick="markCalibrated({{ instrument['id'] }}, {{ instrument['name']|tojson }})">
+                                            <i class="bi bi-check2"></i>
+                                        </button>
+                                        <form method="POST" action="{{ url_for('delete_instrument', instrument_id=instrument['id']) }}" style="display:inline;">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="btn btn-danger btn-sm" title="Delete">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    {% if search or status_filter %}
+                        <i class="bi bi-search display-1 text-muted mb-3"></i>
+                        <h4 class="text-muted">No Instruments Found</h4>
+                        <p class="text-muted mb-3">
+                            No instruments match your search criteria.
+                            <a href="{{ url_for('instruments') }}" class="text-decoration-none">Clear filters</a>
+                        </p>
+                    {% else %}
+                        <i class="bi bi-tools display-1 text-muted mb-3"></i>
+                        <h4 class="text-muted">No Instruments Added</h4>
+                        <p class="text-muted mb-3">Start by adding your first instrument to track calibrations.</p>
+                        <a href="{{ url_for('add_instrument') }}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-2"></i>Add First Instrument
+                        </a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Calibration Modal -->
+<div class="modal fade" id="calibrationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Mark as Calibrated</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="calibrationForm" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <p>Mark instrument <strong id="instrumentName"></strong> as calibrated?</p>
+                    <div class="mb-3">
+                        <label for="calibrationDate" class="form-label">Calibration Date</label>
+                        <input type="date" class="form-control" id="calibrationDate" name="calibration_date" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check2 me-2"></i>Mark Calibrated
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="deleteForm" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Warning!</strong> This action cannot be undone.
+                    </div>
+                    <p>Are you sure you want to delete the instrument <strong id="deleteInstrumentName"></strong>?</p>
+                    <p class="text-muted small">This will also delete all associated calibration reminders.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash me-2"></i>Delete Instrument
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function markCalibrated(instrumentId, instrumentName) {
+    document.getElementById('instrumentName').textContent = instrumentName;
+    document.getElementById('calibrationForm').action = `/instruments/${instrumentId}/calibrate`;
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('calibrationDate').value = today;
+    const modal = new bootstrap.Modal(document.getElementById('calibrationModal'));
+    modal.show();
+}
+
+function confirmDelete(instrumentId, instrumentName) {
+    document.getElementById('deleteInstrumentName').textContent = instrumentName;
+    document.getElementById('deleteForm').action = `/instruments/${instrumentId}/delete`;
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('search');
+    const statusSelect = document.getElementById('status');
+
+    if (searchInput) {
+        searchInput.addEventListener('input', debounce(function() {
+            this.form.submit();
+        }, 500));
+    }
+
+    if (statusSelect) {
+        statusSelect.addEventListener('change', function() {
+            this.form.submit();
+        });
+    }
+});
+</script>
+{% endblock %}

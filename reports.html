@@ -1,0 +1,416 @@
+{% extends "base.html" %}
+
+{% block title %}Reports - Calibration Manager{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h2 mb-0">
+                <i class="bi bi-file-earmark-text me-2"></i>Calibration Reports
+            </h1>
+            <p class="text-muted">Export and view detailed calibration status reports</p>
+        </div>
+        <div class="col-auto">
+            <div class="btn-group">
+                <button type="button" class="btn btn-outline-primary" onclick="exportToCSV()">
+                    <i class="bi bi-file-earmark-spreadsheet me-2"></i>Export CSV
+                </button>
+                <button type="button" class="btn btn-outline-secondary" onclick="printReport()">
+                    <i class="bi bi-printer me-2"></i>Print Report
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Summary -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-tools display-6 text-primary mb-2"></i>
+                    <h4 class="card-title">{{ instruments|length }}</h4>
+                    <p class="card-text text-muted mb-0">Total Instruments</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-exclamation-triangle-fill display-6 text-danger mb-2"></i>
+                    <h4 class="card-title">{{ instruments|selectattr('status', 'equalto', 'overdue')|list|length }}</h4>
+                    <p class="card-text text-muted mb-0">Overdue</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-clock-fill display-6 text-warning mb-2"></i>
+                    <h4 class="card-title">{{ instruments|selectattr('status', 'equalto', 'upcoming')|list|length }}</h4>
+                    <p class="card-text text-muted mb-0">Due Within 30 Days</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-check-circle-fill display-6 text-success mb-2"></i>
+                    <h4 class="card-title">{{ instruments|selectattr('status', 'equalto', 'current')|list|length }}</h4>
+                    <p class="card-text text-muted mb-0">Current</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label for="statusFilter" class="form-label">Filter by Status</label>
+                    <select class="form-select" id="statusFilter" onchange="filterTable()">
+                        <option value="">All Statuses</option>
+                        <option value="overdue">Overdue</option>
+                        <option value="upcoming">Due Soon</option>
+                        <option value="current">Current</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="locationFilter" class="form-label">Filter by Location</label>
+                    <select class="form-select" id="locationFilter" onchange="filterTable()">
+                        <option value="">All Locations</option>
+                        {% set locations = instruments|map(attribute='location')|list|unique %}
+                        {% for location in locations %}
+                            {% if location %}
+                                <option value="{{ location }}">{{ location }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="manufacturerFilter" class="form-label">Filter by Manufacturer</label>
+                    <select class="form-select" id="manufacturerFilter" onchange="filterTable()">
+                        <option value="">All Manufacturers</option>
+                        {% set manufacturers = instruments|map(attribute='manufacturer')|list|unique %}
+                        {% for manufacturer in manufacturers %}
+                            {% if manufacturer %}
+                                <option value="{{ manufacturer }}">{{ manufacturer }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Report Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="bi bi-table me-2"></i>Detailed Calibration Report
+                <span class="badge bg-secondary ms-2" id="visibleCount">{{ instruments|length }}</span>
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            {% if instruments %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="reportTable">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Instrument</th>
+                                <th>Serial Number</th>
+                                <th>Manufacturer</th>
+                                <th>Model</th>
+                                <th>Location</th>
+                                <th>Last Calibration</th>
+                                <th>Next Due</th>
+                                <th>Frequency (Days)</th>
+                                <th>Status</th>
+                                <th>Days Until/Overdue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for instrument in instruments %}
+                            <tr class="instrument-row" 
+                                data-status="{{ instrument.status }}"
+                                data-location="{{ instrument.location or '' }}"
+                                data-manufacturer="{{ instrument.manufacturer or '' }}">
+                                <td>
+                                    <strong>{{ instrument.name }}</strong>
+                                </td>
+                                <td>{{ instrument.serial_number or '-' }}</td>
+                                <td>{{ instrument.manufacturer or '-' }}</td>
+                                <td>{{ instrument.model or '-' }}</td>
+                                <td>{{ instrument.location or '-' }}</td>
+                                <td>{{ instrument.last_calibration_date }}</td>
+                                <td>{{ instrument.next_calibration_date }}</td>
+                                <td class="text-center">{{ instrument.calibration_frequency }}</td>
+                                <td>
+                                    {% if instrument.status == 'overdue' %}
+                                        <span class="badge bg-danger">
+                                            <i class="bi bi-exclamation-triangle me-1"></i>Overdue
+                                        </span>
+                                    {% elif instrument.status == 'upcoming' %}
+                                        <span class="badge bg-warning text-dark">
+                                            <i class="bi bi-clock me-1"></i>Due Soon
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-check-circle me-1"></i>Current
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if instrument.status == 'overdue' %}
+                                        <span class="text-danger">{{ instrument.days_info }} days overdue</span>
+                                    {% elif instrument.status == 'upcoming' %}
+                                        <span class="text-warning">{{ instrument.days_info }} days remaining</span>
+                                    {% else %}
+                                        <span class="text-success">{{ instrument.days_info }} days remaining</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-file-earmark-text display-1 text-muted mb-3"></i>
+                    <h4 class="text-muted">No Instruments to Report</h4>
+                    <p class="text-muted mb-3">Add some instruments to generate calibration reports.</p>
+                    <a href="{{ url_for('add_instrument') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-2"></i>Add First Instrument
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+        {% if instruments %}
+        <div class="card-footer text-muted">
+            <div class="row">
+                <div class="col-md-6">
+                    <small>
+                        <i class="bi bi-info-circle me-1"></i>
+                        Report generated on {{ moment().format('MMMM D, YYYY') if moment else 'today' }}
+                    </small>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <small>
+                        Total instruments: <span id="totalCount">{{ instruments|length }}</span>
+                    </small>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Filter table function
+function filterTable() {
+    const statusFilter = document.getElementById('statusFilter').value;
+    const locationFilter = document.getElementById('locationFilter').value;
+    const manufacturerFilter = document.getElementById('manufacturerFilter').value;
+    
+    const rows = document.querySelectorAll('.instrument-row');
+    let visibleCount = 0;
+    
+    rows.forEach(row => {
+        const status = row.getAttribute('data-status');
+        const location = row.getAttribute('data-location');
+        const manufacturer = row.getAttribute('data-manufacturer');
+        
+        let showRow = true;
+        
+        if (statusFilter && status !== statusFilter) {
+            showRow = false;
+        }
+        
+        if (locationFilter && location !== locationFilter) {
+            showRow = false;
+        }
+        
+        if (manufacturerFilter && manufacturer !== manufacturerFilter) {
+            showRow = false;
+        }
+        
+        if (showRow) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+    
+    document.getElementById('visibleCount').textContent = visibleCount;
+}
+
+// Export to CSV function
+function exportToCSV() {
+    const table = document.getElementById('reportTable');
+    const rows = Array.from(table.querySelectorAll('tr'));
+    
+    // Filter visible rows only
+    const visibleRows = rows.filter((row, index) => {
+        if (index === 0) return true; // Always include header
+        return row.style.display !== 'none';
+    });
+    
+    const csvContent = visibleRows.map(row => {
+        const cells = Array.from(row.querySelectorAll('th, td'));
+        return cells.map(cell => {
+            // Clean cell content (remove HTML tags and normalize whitespace)
+            let content = cell.textContent.trim();
+            // Escape quotes and wrap in quotes if contains comma
+            if (content.includes(',') || content.includes('"')) {
+                content = '"' + content.replace(/"/g, '""') + '"';
+            }
+            return content;
+        }).join(',');
+    }).join('\n');
+    
+    // Create and download file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `calibration-report-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Print report function
+function printReport() {
+    // Hide non-essential elements for printing
+    const navbar = document.querySelector('.navbar');
+    const footer = document.querySelector('footer');
+    const controls = document.querySelectorAll('.btn-group, .card:not(:last-child)');
+    
+    // Create print styles
+    const printStyles = `
+        <style media="print">
+            @page { 
+                margin: 0.5in; 
+                size: landscape;
+            }
+            body { 
+                font-size: 12px; 
+                color: #000 !important; 
+                background: white !important;
+            }
+            .navbar, footer, .btn-group { display: none !important; }
+            .card { 
+                border: none !important; 
+                box-shadow: none !important; 
+            }
+            .table { 
+                font-size: 10px; 
+            }
+            .badge {
+                border: 1px solid #000;
+                background: white !important;
+                color: #000 !important;
+            }
+        </style>
+    `;
+    
+    // Add print styles
+    document.head.insertAdjacentHTML('beforeend', printStyles);
+    
+    // Print
+    window.print();
+    
+    // Remove print styles after printing
+    setTimeout(() => {
+        const style = document.querySelector('style[media="print"]');
+        if (style) style.remove();
+    }, 1000);
+}
+
+// Sort table columns
+function sortTable(columnIndex) {
+    const table = document.getElementById('reportTable');
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    
+    // Determine sort direction
+    const currentSort = table.getAttribute('data-sort') || '';
+    const isAsc = !currentSort.includes(`${columnIndex}-desc`);
+    
+    // Sort rows
+    rows.sort((a, b) => {
+        const aText = a.cells[columnIndex].textContent.trim();
+        const bText = b.cells[columnIndex].textContent.trim();
+        
+        // Try to parse as numbers for numeric columns
+        const aNum = parseFloat(aText);
+        const bNum = parseFloat(bText);
+        
+        if (!isNaN(aNum) && !isNaN(bNum)) {
+            return isAsc ? aNum - bNum : bNum - aNum;
+        }
+        
+        // Text comparison
+        return isAsc ? aText.localeCompare(bText) : bText.localeCompare(aText);
+    });
+    
+    // Update table
+    rows.forEach(row => tbody.appendChild(row));
+    
+    // Update sort indicator
+    table.setAttribute('data-sort', `${columnIndex}-${isAsc ? 'asc' : 'desc'}`);
+}
+
+// Add event listeners for filters and sorting
+document.addEventListener('DOMContentLoaded', function() {
+    const statusFilter = document.getElementById('statusFilter');
+    const locationFilter = document.getElementById('locationFilter');
+    const manufacturerFilter = document.getElementById('manufacturerFilter');
+    const headers = document.querySelectorAll('#reportTable th');
+
+    if (statusFilter) {
+        statusFilter.addEventListener('change', () => {
+            window.lastFilterTime = Date.now();
+            filterTable();
+        });
+    }
+    if (locationFilter) {
+        locationFilter.addEventListener('change', () => {
+            window.lastFilterTime = Date.now();
+            filterTable();
+        });
+    }
+    if (manufacturerFilter) {
+        manufacturerFilter.addEventListener('change', () => {
+            window.lastFilterTime = Date.now();
+            filterTable();
+        });
+    }
+    if (headers.length) {
+        headers.forEach((header, index) => {
+            header.style.cursor = 'pointer';
+            header.title = 'Click to sort';
+            header.addEventListener('click', () => sortTable(index));
+        });
+    }
+    if (document.getElementById('reportTable')) {
+        filterTable();
+    }
+});
+
+// Auto-refresh report data every 10 minutes
+setInterval(() => {
+    // Only reload if user hasn't made filter changes recently
+    const lastFilterTime = window.lastFilterTime || 0;
+    if (Date.now() - lastFilterTime > 300000) { // 5 minutes
+        location.reload();
+    }
+}, 600000); // 10 minutes
+</script>
+{% endblock %}

@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+
+{% block title %}Add Instrument - Calibration Manager{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h2 mb-0">
+                <i class="bi bi-plus-circle me-2"></i>Add New Instrument
+            </h1>
+            <p class="text-muted">Add a new instrument to track calibration schedules</p>
+        </div>
+        <div class="col-auto">
+            <a href="{{ url_for('instruments') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Back to Instruments
+            </a>
+        </div>
+    </div>
+
+    <!-- Add Instrument Form -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-gear me-2"></i>Instrument Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{{ url_for('add_instrument') }}" id="addInstrumentForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="row g-3">
+                            <!-- Basic Information -->
+                            <div class="col-12">
+                                <h6 class="text-muted border-bottom pb-2 mb-3">Basic Information</h6>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="name" class="form-label">
+                                    Instrument Name <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="name" 
+                                       name="name" 
+                                       required
+                                       placeholder="e.g., Digital Scale, pH Meter">
+                                <div class="form-text">Descriptive name for the instrument</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="serial_number" class="form-label">Serial Number</label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="serial_number" 
+                                       name="serial_number"
+                                       placeholder="e.g., ABC123456">
+                                <div class="form-text">Manufacturer's serial number</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="manufacturer" class="form-label">Manufacturer</label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="manufacturer" 
+                                       name="manufacturer"
+                                       placeholder="e.g., Mettler Toledo, Thermo Fisher">
+                                <div class="form-text">Instrument manufacturer</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="model" class="form-label">Model</label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="model" 
+                                       name="model"
+                                       placeholder="e.g., XS205, Orion Star A111" required>
+                                <div class="form-text">Model number or name</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="location" class="form-label">Location</label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="location" 
+                                       name="location"
+                                       placeholder="e.g., Lab 1, Room 205, Building A">
+                                <div class="form-text">Where the instrument is located</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="department_id" class="form-label">Department</label>
+                                <select name="department_id" required>
+                                    <option value="">Select Department</option>
+                                    {% for dept in departments %}
+                                        <option value="{{ dept.id }}">{{ dept.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">Which department owns this instrument</div>
+                            </div>
+
+                            <!-- Calibration Information -->
+                            <div class="col-12 mt-4">
+                                <h6 class="text-muted border-bottom pb-2 mb-3">Calibration Schedule</h6>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="last_calibration_date" class="form-label">
+                                    Last Calibration Date <span class="text-danger">*</span>
+                                </label>
+                                <input type="date" 
+                                       class="form-control" 
+                                       id="last_calibration_date" 
+                                       name="last_calibration_date" 
+                                       required>
+                                <div class="form-text">When was this instrument last calibrated?</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="calibration_frequency" class="form-label">
+                                    Calibration Frequency <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" 
+                                           class="form-control" 
+                                           id="calibration_frequency" 
+                                           name="calibration_frequency" 
+                                           min="1" 
+                                           max="3650" 
+                                           required
+                                           placeholder="365">
+                                    <span class="input-group-text">days</span>
+                                </div>
+                                <div class="form-text">How often should this instrument be calibrated?</div>
+                            </div>
+
+                            <!-- Quick Frequency Buttons -->
+                            <div class="col-12">
+                                <label class="form-label">Common Frequencies</label>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setFrequency(30)">Monthly (30 days)</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setFrequency(90)">Quarterly (90 days)</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setFrequency(180)">Semi-Annual (180 days)</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setFrequency(365)">Annual (365 days)</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setFrequency(730)">Biennial (730 days)</button>
+                                </div>
+                            </div>
+
+                            <!-- Additional Notes -->
+                            <div class="col-12 mt-4">
+                                <h6 class="text-muted border-bottom pb-2 mb-3">Additional Information</h6>
+                            </div>
+                            
+                            <div class="col-12">
+                                <label for="notes" class="form-label">Notes</label>
+                                <textarea class="form-control" 
+                                          id="notes" 
+                                          name="notes" 
+                                          rows="3"
+                                          placeholder="Additional notes about the instrument, calibration requirements, special handling, etc."></textarea>
+                                <div class="form-text">Optional notes about the instrument or calibration requirements</div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex gap-2 justify-content-end border-top pt-3">
+                                    <a href="{{ url_for('instruments') }}" class="btn btn-secondary">
+                                        <i class="bi bi-x-circle me-2"></i>Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="bi bi-check-circle me-2"></i>Add Instrument
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Set today as default last calibration date
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('last_calibration_date').value = today;
+});
+
+// Function to set frequency from quick buttons
+function setFrequency(days) {
+    document.getElementById('calibration_frequency').value = days;
+}
+
+// Form validation
+document.getElementById('addInstrumentForm').addEventListener('submit', function(e) {
+    const name = document.getElementById('name').value.trim();
+    const lastCalDate = document.getElementById('last_calibration_date').value;
+    const frequency = parseInt(document.getElementById('calibration_frequency').value);
+    
+    if (!name) {
+        e.preventDefault();
+        alert('Please enter an instrument name.');
+        document.getElementById('name').focus();
+        return;
+    }
+    
+    if (!lastCalDate) {
+        e.preventDefault();
+        alert('Please select the last calibration date.');
+        document.getElementById('last_calibration_date').focus();
+        return;
+    }
+    
+    if (!frequency || frequency < 1) {
+        e.preventDefault();
+        alert('Please enter a valid calibration frequency (at least 1 day).');
+        document.getElementById('calibration_frequency').focus();
+        return;
+    }
+    
+    // Check if last calibration date is not in the future
+    const lastDate = new Date(lastCalDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (lastDate > today) {
+        const proceed = confirm('The last calibration date is in the future. Is this correct?');
+        if (!proceed) {
+            e.preventDefault();
+            document.getElementById('last_calibration_date').focus();
+            return;
+        }
+    }
+    
+    // Show loading state
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Adding...';
+    submitBtn.disabled = true;
+});
+
+// Real-time validation feedback
+document.getElementById('name').addEventListener('input', function() {
+    this.classList.toggle('is-invalid', this.value.trim().length === 0);
+    this.classList.toggle('is-valid', this.value.trim().length > 0);
+});
+
+document.getElementById('calibration_frequency').addEventListener('input', function() {
+    const value = parseInt(this.value);
+    this.classList.toggle('is-invalid', !value || value < 1);
+    this.classList.toggle('is-valid', value && value >= 1);
+});
+
+document.getElementById('last_calibration_date').addEventListener('change', function() {
+    this.classList.toggle('is-invalid', !this.value);
+    this.classList.toggle('is-valid', !!this.value);
+});
+</script>
+{% endblock %}

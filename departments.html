@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Departments - Calibration Manager</title>
+    
+    <!-- Bootstrap CSS with Replit theme -->
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('dashboard') }}">
+                <i class="bi bi-gear-fill me-2"></i>Calibration Manager
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('dashboard') }}">
+                            <i class="bi bi-speedometer2 me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('instruments') }}">
+                            <i class="bi bi-tools me-1"></i>Instruments
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('repairs') }}">
+                            <i class="bi bi-wrench me-1"></i>Repairs
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('reports') }}">
+                            <i class="bi bi-graph-up me-1"></i>Reports
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('departments') }}">
+                            <i class="bi bi-building me-1"></i>Departments
+                        </a>
+                    </li>
+                </ul>
+                
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle me-1"></i>{{ session.username }}
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('send_reminders') }}">
+                                <i class="bi bi-envelope me-2"></i>Send Reminders
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}">
+                                <i class="bi bi-box-arrow-right me-2"></i>Logout
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Page Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="mb-0">
+                <i class="bi bi-building me-2"></i>Department Management
+            </h2>
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addDepartmentModal">
+                <i class="bi bi-plus-lg me-2"></i>Add Department
+            </button>
+        </div>
+
+        <!-- Departments Table -->
+        <div class="card">
+            <div class="card-body">
+                {% if departments %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Department Name</th>
+                                <th>Description</th>
+                                <th>Manager Email</th>
+                                <th>Instruments</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for dept in departments %}
+                            <tr>
+                                <td>
+                                    <strong>{{ dept.name }}</strong>
+                                </td>
+                                <td>{{ dept.description or 'No description' }}</td>
+                                <td>{{ dept.manager_email or 'Not set' }}</td>
+                                <td>
+                                    <span class="badge bg-info">{{ dept.instruments|length if dept.instruments else 0 }}</span>
+                                </td>
+                                <td>{{ dept.created_at.strftime('%Y-%m-%d') if dept.created_at else '' }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary me-1" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#editDepartmentModal"
+                                            onclick="editDepartment({{ dept.id }}, '{{ dept.name }}', '{{ dept.description or '' }}', '{{ dept.manager_email or '' }}')"
+                                            title="Edit Department">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" 
+                                            onclick="deleteDepartment({{ dept.id }}, '{{ dept.name }}')"
+                                            title="Delete Department">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-building display-1 text-muted"></i>
+                    <h4 class="mt-3">No departments found</h4>
+                    <p class="text-muted">Start by adding your first department.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Department Modal -->
+    <div class="modal fade" id="addDepartmentModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Department</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="{{ url_for('add_department') }}">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Department Name *</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="2"></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="manager_email" class="form-label">Manager Email</label>
+                            <input type="email" class="form-control" id="manager_email" name="manager_email">
+                            <div class="form-text">Email address for calibration reminders</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">Add Department</button>
+                    </div>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Department Modal -->
+    <div class="modal fade" id="editDepartmentModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Department</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="{{ url_for('edit_department') }}">
+                    <input type="hidden" id="edit_dept_id" name="dept_id">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="edit_name" class="form-label">Department Name *</label>
+                            <input type="text" class="form-control" id="edit_name" name="name" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="edit_description" class="form-label">Description</label>
+                            <textarea class="form-control" id="edit_description" name="description" rows="2"></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="edit_manager_email" class="form-label">Manager Email</label>
+                            <input type="email" class="form-control" id="edit_manager_email" name="manager_email">
+                            <div class="form-text">Email address for calibration reminders</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Update Department</button>
+                    </div>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteDepartmentModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Delete Department</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete the department "<span id="delete_dept_name"></span>"?</p>
+                    <p class="text-warning"><small>This action cannot be undone. All instruments in this department will be unassigned.</small></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form method="POST" action="{{ url_for('delete_department') }}" class="d-inline">
+                        <input type="hidden" id="delete_dept_id" name="dept_id">
+                        <button type="submit" class="btn btn-danger">Delete Department</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    
+    <script>
+        function editDepartment(id, name, description, managerEmail) {
+            document.getElementById('edit_dept_id').value = id;
+            document.getElementById('edit_name').value = name;
+            document.getElementById('edit_description').value = description;
+            document.getElementById('edit_manager_email').value = managerEmail;
+        }
+        
+        function deleteDepartment(id, name) {
+            document.getElementById('delete_dept_id').value = id;
+            document.getElementById('delete_dept_name').textContent = name;
+            new bootstrap.Modal(document.getElementById('deleteDepartmentModal')).show();
+        }
+    </script>
+</body>
+</html>
